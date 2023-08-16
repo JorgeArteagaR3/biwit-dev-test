@@ -1,0 +1,416 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+// the high level place created for an entire organization
+model Organization {
+  id                    String               @id
+  name                  String               @default("Personal")
+  email                 String?
+  phoneNumber           String?
+  contactName           String?
+  description           String?
+  createdById           String
+  createdBy             User                 @relation(fields: [createdById], references: [id])
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  lastPaymentStatusDate DateTime             @default(now())
+  paymentStatus         PaymentStatus        @default(value: PAID)
+  productPlanId         String?
+  productPlan           ProductPlan?         @relation(fields: [productPlanId], references: [id])
+  stripeExternalId      String?
+  projects              Project[]
+  members               OrganizationMember[]
+  paymentEvent          PaymentEvent[]
+  availableChatTokens   Int?                 @default(0)
+  availableStorage      Float?               @default(0.0)
+  planExpirationDate    DateTime?
+}
+
+model ProductPlan {
+  id                String              @id
+  externalId        String              @unique
+  name              String
+  storageLimitInMB  Int
+  monthlyTokenLimit Int
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  paymentEvent      PaymentEvent[]
+  Organization      Organization[]
+  duration          ProductPlanDuration
+}
+
+enum ProductPlanDuration {
+  TRIAL
+  MONTHLY
+  YEARLY
+}
+
+model PaymentEvent {
+  id             String        @id
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  productPlanId  String
+  productPlan    ProductPlan   @relation(fields: [productPlanId], references: [id])
+  externalId     String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  status         PaymentStatus
+  payload        Json
+}
+
+model OrganizationMember {
+  id             String                 @id
+  organizationId String
+  organization   Organization           @relation(fields: [organizationId], references: [id])
+  userId         String
+  user           User                   @relation(fields: [userId], references: [id])
+  role           OrganizationMemberRole
+  banned         Boolean                @default(false)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+}
+
+// A place within an account that has a trained model
+model Project {
+  id               String            @id
+  name             String
+  contextText      String            @default(value: "You are a business professional.")
+  organizationId   String
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  organizationRole ProjectMemberRole
+  dataCollectionId String
+  dataSources      DataSource[]
+  members          ProjectMember[]
+  integrations     Integration[]
+  archived         Boolean           @default(false)
+  personas         Persona[]
+  chats            Chat[]
+  messages         Message[]
+  createdById      String
+  createdBy        User              @relation(fields: [createdById], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model ProjectMember {
+  id        String            @id
+  projectId String
+  project   Project           @relation(fields: [projectId], references: [id])
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  banned    Boolean           @default(false)
+  role      ProjectMemberRole
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model DataSource {
+  id           String           @id
+  name         String
+  type         DataSourceType
+  source       DataSourceSource @default(value: LOCAL)
+  externalId   String?
+  mimeType     String?
+  tokens       Int
+  size         Int              @default(value: 0)
+  projectId    String
+  project      Project          @relation(fields: [projectId], references: [id])
+  fileUpload   FileUpload?      @relation(fields: [fileUploadId], references: [id])
+  fileUploadId String?          @unique
+  createdById  String
+  createdBy    User             @relation(fields: [createdById], references: [id])
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model FileUpload {
+  id            String           @id
+  status        FileUploadStatus
+  containerName String
+  blobName      String
+  uploadUrl     String           @unique
+  fileName      String
+  sizeBytes     Int
+  dataSource    DataSource?
+  createdById   String
+  createdBy     User             @relation(fields: [createdById], references: [id])
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([containerName, blobName])
+}
+
+model Chat {
+  id          String    @id
+  name        String    @default("Untitled Chat")
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id])
+  messages    Message[]
+  personaId   String
+  persona     Persona   @relation(fields: [personaId], references: [id])
+  isPublic    Boolean   @default(false)
+  createdById String
+  createdBy   User      @relation("CreatedByUser", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  updatedById String
+  updatedBy   User      @relation("UpdatedByUser", fields: [updatedById], references: [id])
+}
+
+model Message {
+  id            String         @id
+  content       String
+  // if user is null we assume its the bot
+  personaId     String?
+  persona       Persona?       @relation(fields: [personaId], references: [id])
+  userId        String?
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatId        String?
+  chat          Chat?          @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  origin        OriginMessage?
+  integrationId String?
+  convoPairId   String?
+  projectId     String?
+  project       Project?       @relation(fields: [projectId], references: [id])
+  tokenCount    Int            @default(value: 0)
+  userType      UserType?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Integration {
+  id                  String               @id
+  name                String               @default("Untitled Integration")
+  externalId          String               @unique
+  type                IntegrationType
+  themeId             String?
+  projectId           String
+  project             Project              @relation(fields: [projectId], references: [id])
+  suggestions         String[]
+  personaIntegrations PersonaIntegration[]
+  otpsWhatsapps       OtpWhatsapp[]
+  createdById         String?
+  createdBy           User?                @relation(fields: [createdById], references: [id])
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @map("refreshToken") @db.Text
+  access_token      String?  @map("accessToken") @db.Text
+  expires_at        Int?     @map("expiresAt")
+  token_type        String?  @map("tokenType")
+  scope             String?
+  id_token          String?  @map("idToken") @db.Text
+  session_state     String?  @map("sessionState")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  expires      DateTime
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model User {
+  id                      String               @id @default(cuid())
+  name                    String?
+  email                   String?              @unique
+  emailVerified           DateTime?
+  image                   String?
+  accounts                Account[]
+  sessions                Session[]
+  messages                Message[]
+  organizationMemberships OrganizationMember[]
+  projectMemberships      ProjectMember[]
+  organizations           Organization[]
+  projects                Project[]
+  dataSources             DataSource[]
+  integrations            Integration[]
+  personas                Persona[]
+  otpsWhatsapps           OtpWhatsapp[]
+  createdChats            Chat[]               @relation("CreatedByUser")
+  updatedChats            Chat[]               @relation("UpdatedByUser")
+  createdFileUploads      FileUpload[]
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+}
+
+model VerificationToken {
+  id         String   @id
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, token])
+}
+
+model Persona {
+  id                  String               @id
+  name                String
+  context             String
+  prompt              String
+  personaIntegrations PersonaIntegration[]
+  projectId           String
+  project             Project              @relation(fields: [projectId], references: [id])
+  isDefault           Boolean              @default(false)
+  chats               Chat[]
+  messages            Message[]
+  createdById         String?
+  createdBy           User?                @relation(fields: [createdById], references: [id])
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model PersonaIntegration {
+  id            String                   @id
+  scope         ScopePersonaIntegration? @unique
+  channelId     String?                  @unique
+  personaId     String
+  persona       Persona                  @relation(fields: [personaId], references: [id])
+  integrationId String                   @unique
+  integration   Integration              @relation(fields: [integrationId], references: [id])
+  projectId     String                   @default("")
+  isDefault     Boolean?                 @default(false)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+}
+
+model OtpWhatsapp {
+  id             String            @id
+  otp            String            @unique
+  whatsappNumber String            @unique
+  status         OtpWhatsappStatus
+  expiresAt      DateTime
+  integrationId  String?
+  integration    Integration?      @relation(fields: [integrationId], references: [id])
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+}
+
+model FeatureFlag {
+  id    String          @id
+  type  FeatureFlagType
+  key   String          @unique
+  value String
+}
+
+enum FeatureFlagType {
+  STRING
+  INT
+  DOUBLE
+  BOOLEAN
+}
+
+enum OrganizationMemberRole {
+  VIEWER
+  EDITOR
+  ADMIN
+  BILLING
+  OWNER
+}
+
+enum ProjectMemberRole {
+  VIEWER
+  EDITOR
+  OWNER
+}
+
+enum DataSourceType {
+  Text
+  File
+  URL
+  GOOGLE_DRIVE
+  ONEDRIVE
+}
+
+enum DataSourceSource {
+  LOCAL
+  GOOGLE_DRIVE
+  ONEDRIVE
+}
+
+enum MemberType {
+  USER
+  ORGANIZATION
+}
+
+enum ResourceType {
+  ORGANIZATION
+  PROJECT
+}
+
+enum Role {
+  VIEWER
+  EDITOR
+  ADMIN
+  OWNER
+}
+
+enum OriginMessage {
+  INTERNAL
+  WIDGET
+  DISCORD
+  WHATSAPP
+}
+
+enum UserType {
+  AUTHENTICATED
+  UNAUTHENTICATED
+}
+
+enum IntegrationType {
+  DISCORD
+  WHATSAPP
+  WIDGET
+}
+
+enum OtpWhatsappStatus {
+  UNVERIFIED
+  VERIFIED
+  EXPIRED
+  INVALID
+}
+
+enum ScopePersonaIntegration {
+  CHANNEL
+  SERVER
+}
+
+enum PaymentStatus {
+  PAID
+  FAILED
+}
+
+enum FileUploadStatus {
+  PENDING
+  UPLOADED
+  FAILED
+}

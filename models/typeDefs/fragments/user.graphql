@@ -1,0 +1,10 @@
+fragment UserFields on User {
+  id
+  name
+  email
+  image
+}
+
+fragment ViewerFields on User {
+  ...UserFields
+}
