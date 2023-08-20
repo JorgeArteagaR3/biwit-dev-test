@@ -1,9 +1,8 @@
-import { User } from '@prisma/client'
-// import { NextApiRequest, NextApiResponse } from 'next'
+import { PrismaClient, User } from '@prisma/client'
 
-export type IContext = {
-  testData: string
-}
+export type IContext = PrismaClient
+
+const prisma = new PrismaClient()
 
 export type IAuthenticatedContext = {
   user?: User
@@ -13,7 +12,5 @@ export type IAuthenticatedContext = {
 export async function createContext(): Promise<IContext> {
   // req: NextApiRequest,
   // res: NextApiResponse
-  return {
-    testData: 'ds'
-  }
+  return prisma
 }

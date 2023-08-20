@@ -6,11 +6,11 @@ export default `type User {
 }
 
 type UserResponse {
-  user: User!
+  user: User
 }
 
 type Query {
-  currentUser: UserResponse!
+  currentUser: UserResponse
 }
 
 input UpdateUserInput {
@@ -20,7 +20,22 @@ input UpdateUserInput {
   image: String
 }
 
+input CreateUserInput {
+  name: String
+  email: String
+  image: String
+}
+
+input DeleteUserInput {
+  id: ID!
+  name: String
+  email: String
+  image: String
+}
+
 type Mutation {
   updateUser(input: UpdateUserInput!): UserResponse!
+  createUser(input: CreateUserInput!): UserResponse!
+  deleteUser(input: DeleteUserInput!): UserResponse!
 }
 `;

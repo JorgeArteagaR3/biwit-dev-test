@@ -29,9 +29,32 @@ export type Scalars = {
   Float: number
 }
 
+export type CreateUserInput = {
+  email?: InputMaybe<Scalars['String']>
+  image?: InputMaybe<Scalars['String']>
+  name?: InputMaybe<Scalars['String']>
+}
+
+export type DeleteUserInput = {
+  email?: InputMaybe<Scalars['String']>
+  id: Scalars['ID']
+  image?: InputMaybe<Scalars['String']>
+  name?: InputMaybe<Scalars['String']>
+}
+
 export type Mutation = {
   __typename: 'Mutation'
+  createUser: UserResponse
+  deleteUser: UserResponse
   updateUser: UserResponse
+}
+
+export type MutationcreateUserArgs = {
+  input: CreateUserInput
+}
+
+export type MutationdeleteUserArgs = {
+  input: DeleteUserInput
 }
 
 export type MutationupdateUserArgs = {
@@ -40,7 +63,7 @@ export type MutationupdateUserArgs = {
 
 export type Query = {
   __typename: 'Query'
-  currentUser: UserResponse
+  currentUser?: Maybe<UserResponse>
 }
 
 export type UpdateUserInput = {
@@ -60,7 +83,7 @@ export type User = {
 
 export type UserResponse = {
   __typename: 'UserResponse'
-  user: User
+  user?: Maybe<User>
 }
 
 export type UserFieldsFragment = {
@@ -87,13 +110,58 @@ export type UpdateUserMutation = {
   __typename: 'Mutation'
   updateUser: {
     __typename: 'UserResponse'
-    user: {
-      __typename: 'User'
-      id: string
-      name?: string | null | undefined
-      email?: string | null | undefined
-      image?: string | null | undefined
-    }
+    user?:
+      | {
+          __typename: 'User'
+          id: string
+          name?: string | null | undefined
+          email?: string | null | undefined
+          image?: string | null | undefined
+        }
+      | null
+      | undefined
+  }
+}
+
+export type CreateUserMutationVariables = Exact<{
+  input: CreateUserInput
+}>
+
+export type CreateUserMutation = {
+  __typename: 'Mutation'
+  createUser: {
+    __typename: 'UserResponse'
+    user?:
+      | {
+          __typename: 'User'
+          id: string
+          name?: string | null | undefined
+          email?: string | null | undefined
+          image?: string | null | undefined
+        }
+      | null
+      | undefined
+  }
+}
+
+export type DeleteUserMutationVariables = Exact<{
+  input: DeleteUserInput
+}>
+
+export type DeleteUserMutation = {
+  __typename: 'Mutation'
+  deleteUser: {
+    __typename: 'UserResponse'
+    user?:
+      | {
+          __typename: 'User'
+          id: string
+          name?: string | null | undefined
+          email?: string | null | undefined
+          image?: string | null | undefined
+        }
+      | null
+      | undefined
   }
 }
 
@@ -101,16 +169,22 @@ export type GetCurrentUserQueryVariables = Exact<{ [key: string]: never }>
 
 export type GetCurrentUserQuery = {
   __typename: 'Query'
-  currentUser: {
-    __typename: 'UserResponse'
-    user: {
-      __typename: 'User'
-      id: string
-      name?: string | null | undefined
-      email?: string | null | undefined
-      image?: string | null | undefined
-    }
-  }
+  currentUser?:
+    | {
+        __typename: 'UserResponse'
+        user?:
+          | {
+              __typename: 'User'
+              id: string
+              name?: string | null | undefined
+              email?: string | null | undefined
+              image?: string | null | undefined
+            }
+          | null
+          | undefined
+      }
+    | null
+    | undefined
 }
 
 export type WithIndex<TObject> = TObject & Record<string, any>
@@ -224,6 +298,8 @@ export type DirectiveResolverFn<
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>
+  CreateUserInput: CreateUserInput
+  DeleteUserInput: DeleteUserInput
   ID: ResolverTypeWrapper<Scalars['ID']>
   Mutation: ResolverTypeWrapper<{}>
   Query: ResolverTypeWrapper<{}>
@@ -231,13 +307,15 @@ export type ResolversTypes = ResolversObject<{
   UpdateUserInput: UpdateUserInput
   User: ResolverTypeWrapper<UserDB>
   UserResponse: ResolverTypeWrapper<
-    Omit<UserResponse, 'user'> & { user: ResolversTypes['User'] }
+    Omit<UserResponse, 'user'> & { user?: Maybe<ResolversTypes['User']> }
   >
 }>
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
   Boolean: Scalars['Boolean']
+  CreateUserInput: CreateUserInput
+  DeleteUserInput: DeleteUserInput
   ID: Scalars['ID']
   Mutation: {}
   Query: {}
@@ -245,7 +323,7 @@ export type ResolversParentTypes = ResolversObject<{
   UpdateUserInput: UpdateUserInput
   User: UserDB
   UserResponse: Omit<UserResponse, 'user'> & {
-    user: ResolversParentTypes['User']
+    user?: Maybe<ResolversParentTypes['User']>
   }
 }>
 
@@ -253,6 +331,18 @@ export type MutationResolvers<
   ContextType = IContext,
   ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']
 > = ResolversObject<{
+  createUser?: Resolver<
+    ResolversTypes['UserResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationcreateUserArgs, 'input'>
+  >
+  deleteUser?: Resolver<
+    ResolversTypes['UserResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationdeleteUserArgs, 'input'>
+  >
   updateUser?: Resolver<
     ResolversTypes['UserResponse'],
     ParentType,
@@ -266,7 +356,7 @@ export type QueryResolvers<
   ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']
 > = ResolversObject<{
   currentUser?: Resolver<
-    ResolversTypes['UserResponse'],
+    Maybe<ResolversTypes['UserResponse']>,
     ParentType,
     ContextType
   >
@@ -287,7 +377,7 @@ export type UserResponseResolvers<
   ContextType = IContext,
   ParentType extends ResolversParentTypes['UserResponse'] = ResolversParentTypes['UserResponse']
 > = ResolversObject<{
-  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>
+  user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }>
 
@@ -339,6 +429,90 @@ export type UpdateUserMutationResult = Apollo.MutationResult<UpdateUserMutation>
 export type UpdateUserMutationOptions = Apollo.BaseMutationOptions<
   UpdateUserMutation,
   UpdateUserMutationVariables
+>
+export type CreateUserMutationFn = Apollo.MutationFunction<
+  CreateUserMutation,
+  CreateUserMutationVariables
+>
+
+/**
+ * __useCreateUserMutation__
+ *
+ * To run a mutation, you first call `useCreateUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createUserMutation, { data, loading, error }] = useCreateUserMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateUserMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateUserMutation,
+    CreateUserMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateUserMutation, CreateUserMutationVariables>(
+    Operations.CreateUser,
+    options
+  )
+}
+export type CreateUserMutationHookResult = ReturnType<
+  typeof useCreateUserMutation
+>
+export type CreateUserMutationResult = Apollo.MutationResult<CreateUserMutation>
+export type CreateUserMutationOptions = Apollo.BaseMutationOptions<
+  CreateUserMutation,
+  CreateUserMutationVariables
+>
+export type DeleteUserMutationFn = Apollo.MutationFunction<
+  DeleteUserMutation,
+  DeleteUserMutationVariables
+>
+
+/**
+ * __useDeleteUserMutation__
+ *
+ * To run a mutation, you first call `useDeleteUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteUserMutation, { data, loading, error }] = useDeleteUserMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeleteUserMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    DeleteUserMutation,
+    DeleteUserMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<DeleteUserMutation, DeleteUserMutationVariables>(
+    Operations.DeleteUser,
+    options
+  )
+}
+export type DeleteUserMutationHookResult = ReturnType<
+  typeof useDeleteUserMutation
+>
+export type DeleteUserMutationResult = Apollo.MutationResult<DeleteUserMutation>
+export type DeleteUserMutationOptions = Apollo.BaseMutationOptions<
+  DeleteUserMutation,
+  DeleteUserMutationVariables
 >
 
 /**

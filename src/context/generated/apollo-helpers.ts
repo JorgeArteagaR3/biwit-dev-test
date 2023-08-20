@@ -4,8 +4,15 @@ import {
   TypePolicies,
   TypePolicy
 } from '@apollo/client/cache'
-export type MutationKeySpecifier = ('updateUser' | MutationKeySpecifier)[]
+export type MutationKeySpecifier = (
+  | 'createUser'
+  | 'deleteUser'
+  | 'updateUser'
+  | MutationKeySpecifier
+)[]
 export type MutationFieldPolicy = {
+  createUser?: FieldPolicy<any> | FieldReadFunction<any>
+  deleteUser?: FieldPolicy<any> | FieldReadFunction<any>
   updateUser?: FieldPolicy<any> | FieldReadFunction<any>
 }
 export type QueryKeySpecifier = ('currentUser' | QueryKeySpecifier)[]

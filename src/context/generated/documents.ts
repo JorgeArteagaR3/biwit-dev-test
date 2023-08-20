@@ -24,6 +24,26 @@ export const UpdateUser = gql`
   }
   ${UserFields}
 `
+export const CreateUser = gql`
+  mutation CreateUser($input: CreateUserInput!) {
+    createUser(input: $input) {
+      user {
+        ...UserFields
+      }
+    }
+  }
+  ${UserFields}
+`
+export const DeleteUser = gql`
+  mutation DeleteUser($input: DeleteUserInput!) {
+    deleteUser(input: $input) {
+      user {
+        ...UserFields
+      }
+    }
+  }
+  ${UserFields}
+`
 export const GetCurrentUser = gql`
   query GetCurrentUser {
     currentUser {

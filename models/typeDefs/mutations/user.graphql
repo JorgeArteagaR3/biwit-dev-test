@@ -5,3 +5,18 @@ mutation UpdateUser($input: UpdateUserInput!) {
     }
   }
 }
+mutation CreateUser($input: CreateUserInput!) {
+  createUser(input: $input) {
+    user {
+      ...UserFields
+    }
+  }
+}
+
+mutation DeleteUser($input: DeleteUserInput!) {
+  deleteUser(input: $input) {
+    user {
+      ...UserFields
+    }
+  }
+}

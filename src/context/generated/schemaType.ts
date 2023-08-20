@@ -18,9 +18,32 @@ export type Scalars = {
   Float: number
 }
 
+export type CreateUserInput = {
+  email?: InputMaybe<Scalars['String']>
+  image?: InputMaybe<Scalars['String']>
+  name?: InputMaybe<Scalars['String']>
+}
+
+export type DeleteUserInput = {
+  email?: InputMaybe<Scalars['String']>
+  id: Scalars['ID']
+  image?: InputMaybe<Scalars['String']>
+  name?: InputMaybe<Scalars['String']>
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
+  createUser: UserResponse
+  deleteUser: UserResponse
   updateUser: UserResponse
+}
+
+export type MutationCreateUserArgs = {
+  input: CreateUserInput
+}
+
+export type MutationDeleteUserArgs = {
+  input: DeleteUserInput
 }
 
 export type MutationUpdateUserArgs = {
@@ -29,7 +52,7 @@ export type MutationUpdateUserArgs = {
 
 export type Query = {
   __typename?: 'Query'
-  currentUser: UserResponse
+  currentUser?: Maybe<UserResponse>
 }
 
 export type UpdateUserInput = {
@@ -49,5 +72,5 @@ export type User = {
 
 export type UserResponse = {
   __typename?: 'UserResponse'
-  user: User
+  user?: Maybe<User>
 }
